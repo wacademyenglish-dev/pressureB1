@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WOLF LABS | Under Pressure (B1) - Extended Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* --- SPOTIFY INSPIRED THEME --- */
+        :root {
+            --bg: #121212;
+            --surface: #181818;
+            --surface-hover: #282828;
+            --border: transparent;
+            --accent: #1DB954;
+            --accent-glow: rgba(29, 185, 84, 0.3);
+            --correct: #1DB954;
+            --incorrect: #E91429;
+            --text-main: #FFFFFF;
+            --text-dim: #B3B3B3;
+            --font: 'Inter', system-ui, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: var(--font);
+            line-height: 1.6;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* --- UI COMPONENTS --- */
+        .glass-panel {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 30px;
+            transition: background 0.3s;
+        }
+
+        .header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+        }
+
+        .logo { font-weight: 800; letter-spacing: 2px; font-size: 14px; display: flex; align-items: center; gap: 10px; color: #fff;}
+        .logo span { color: var(--accent); }
+
+        .progress-container { position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: #282828; }
+        .progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.4s ease; box-shadow: 0 0 10px var(--accent-glow); }
+
+        .controls { display: flex; gap: 15px; }
+        .icon-btn { background: transparent; border: none; color: var(--text-dim); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .icon-btn:hover { background: var(--surface-hover); color: #fff; transform: scale(1.05); }
+
+        /* --- MAIN LAYOUT --- */
+        main {
+            flex: 1; margin-top: 70px; margin-bottom: 90px; position: relative;
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+            overflow-y: auto;
+        }
+
+        .step {
+            position: absolute; width: 100%; max-width: 850px;
+            opacity: 0; pointer-events: none; transform: scale(0.98);
+            transition: all 0.4s ease-out; visibility: hidden;
+            max-height: 75vh; overflow-y: auto; padding: 40px;
+            scrollbar-width: thin; scrollbar-color: #535353 var(--bg);
+        }
+
+        .step::-webkit-scrollbar { width: 8px; }
+        .step::-webkit-scrollbar-thumb { background: #535353; border-radius: 4px; }
+
+        .step.active {
+            opacity: 1; pointer-events: auto; transform: scale(1);
+            visibility: visible; position: relative;
+        }
+
+        /* --- TYPOGRAPHY & BUTTONS --- */
+        h1 { font-size: 3rem; margin-bottom: 10px; font-weight: 800; letter-spacing: -1px; }
+        h2 { font-size: 1.8rem; margin-bottom: 20px; color: #fff; font-weight: 700; letter-spacing: -0.5px;}
+        h3 { font-size: 1.2rem; margin-bottom: 10px; font-weight: 700;}
+        p { margin-bottom: 20px; color: var(--text-dim); font-size: 1.1rem; }
+
+        .btn {
+            padding: 16px 36px; border: none; border-radius: 500px; font-family: var(--font);
+            font-size: 1rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+            cursor: pointer; transition: all 0.2s;
+            background: #fff; color: #000;
+        }
+        .btn-accent { background: var(--accent); color: #000; }
+        .btn:hover { transform: scale(1.04); }
+        .btn-accent:hover { background: #1ed760; filter: brightness(1.1); }
+        .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+        /* --- PREMIUM SPEAKING HUB --- */
+        .speaking-hub {
+            margin-top: 35px; padding: 30px;
+            background: #181818; border-radius: 12px;
+            border: 1px solid #282828;
+            position: relative; display: none;
+            animation: slideUp 0.4s ease forwards;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .speaking-hub::before {
+            content: 'SPEAKING HUB';
+            position: absolute; top: -12px; left: 24px;
+            background: var(--accent); color: #000;
+            font-size: 0.75rem; font-weight: 800;
+            padding: 4px 12px; border-radius: 500px;
+            letter-spacing: 1px;
+        }
+        .speaking-hub p { margin: 0; color: #fff; font-weight: 600; font-size: 1.15rem; line-height: 1.5; }
+
+        /* --- BOTTOM NAVIGATION --- */
+        .nav-bar {
+            position: fixed; bottom: 0; left: 0; right: 0; height: 90px;
+            background: #181818; border-top: 1px solid #282828;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 40px; z-index: 90;
+        }
+
+        /* --- MODULE STYLES --- */
+        .slider-group { margin-bottom: 30px; }
+        .slider-group label { display: block; margin-bottom: 12px; font-weight: 600; color: #fff;}
+        input[type=range] { -webkit-appearance: none; width: 100%; background: #535353; height: 4px; border-radius: 2px; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; cursor: pointer; transition: 0.2s;}
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+        .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .choice-card { padding: 30px; text-align: center; cursor: pointer; background: var(--surface); border-radius: 8px; transition: all 0.2s; border: 2px solid transparent; }
+        .choice-card:hover { background: var(--surface-hover); }
+        
+        .list-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .list-item { padding: 18px 24px; background: var(--surface); border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 600; transition: background 0.2s;}
+        .list-item:hover { background: var(--surface-hover); }
+
+        .vocab-word { color: var(--accent); font-weight: 800; cursor: pointer; transition: all 0.2s; display: inline-block;}
+        .vocab-word:hover { color: #1ed760; text-decoration: underline; }
+
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 20px; margin-bottom: 15px; background: var(--surface); border-radius: 8px; font-weight: 600;}
+        .toggle-btn { background: #282828; border: none; color: var(--text-main); padding: 10px 24px; border-radius: 500px; cursor: pointer; font-weight: 600; transition: 0.2s;}
+        .toggle-btn:hover { background: #3E3E3E; }
+        .toggle-btn.correct { background: var(--correct); color: #000; }
+        .toggle-btn.incorrect { background: var(--incorrect); color: #fff; }
+
+        .drop-zone { min-height: 80px; border: 2px dashed #535353; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; padding: 15px; gap: 10px; flex-wrap: wrap; }
+        .drop-zone.success { border-color: var(--correct); border-style: solid; background: rgba(29, 185, 84, 0.05); }
+        .word-bank { display: flex; gap: 10px; flex-wrap: wrap; }
+        .word-chip { padding: 12px 24px; background: var(--surface); border-radius: 500px; cursor: pointer; user-select: none; transition: all 0.2s; font-weight: 600;}
+        .word-chip:hover { background: #3E3E3E; }
+        .word-chip.used { opacity: 0; pointer-events: none; }
+
+        .chat-container { display: flex; flex-direction: column; gap: 15px; }
+        .msg { padding: 16px 20px; border-radius: 16px; max-width: 80%; font-size: 1.1rem; }
+        .msg.friend { background: #282828; align-self: flex-start; border-bottom-left-radius: 4px; color: #fff; }
+        .msg.you { background: var(--accent); color: #000; align-self: flex-end; border-bottom-right-radius: 4px; display: none; font-weight: 600;}
+        .chat-option { padding: 16px 20px; background: var(--surface); border-radius: 8px; cursor: pointer; text-align: left; color: #fff; font-weight: 600;}
+        .chat-option:hover { background: var(--surface-hover); }
+
+        .arena-grid { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;}
+        .arena-card { width: 220px; height: 300px; perspective: 1000px; cursor: pointer; }
+        .card-inner { width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; position: relative; }
+        .arena-card.flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; text-align: center; border-radius: 12px; }
+        .card-front { background: var(--surface); font-size: 3rem; color: #fff; }
+        .card-back { background: var(--accent); transform: rotateY(180deg); color: #000; overflow-y: auto;}
+        .card-back h3 { color: #000; font-weight: 800; }
+        .card-back p { color: #121212; font-weight: 600; }
+
+        /* Error Finder */
+        .error-sentence { font-size: 1.5rem; word-spacing: 5px; line-height: 2; font-weight: 600;}
+        .error-word { display: inline-block; padding: 5px 10px; cursor: pointer; border-radius: 8px; transition: 0.2s; }
+        .error-word:hover { background: #282828; }
+        .error-word.found { background: var(--incorrect); color: white; }
+
+        /* Memory Minigame */
+        .memory-box { display: flex; gap: 15px; justify-content: center; margin: 30px 0; font-size: 2rem; font-weight: 800; color: #fff; letter-spacing: 3px;}
+        .memory-btn { width: auto; padding: 15px 25px; border-radius: 8px; background: #282828; border: none; color: white; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.2s;}
+        .memory-btn:hover { background: #3E3E3E; transform: scale(1.05); }
+
+        /* --- SPOTIFY STYLE VOCAB PANEL --- */
+        .vocab-panel {
+            position: fixed; top: 0; right: -450px; width: 400px; height: 100vh;
+            background: #121212; border-left: 1px solid #282828;
+            z-index: 200; padding: 40px 30px; box-shadow: -10px 0 40px rgba(0,0,0,0.8);
+            transition: right 0.4s cubic-bezier(0.3, 0, 0, 1);
+            display: flex; flex-direction: column; gap: 24px;
+        }
+        .vocab-panel.open { right: 0; }
+        
+        .vocab-close {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(255,255,255,0.05); border: none; color: #B3B3B3;
+            width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; transition: 0.2s;
+        }
+        .vocab-close:hover { background: rgba(255,255,255,0.1); color: #fff; transform: scale(1.05); }
+        
+        .vocab-eyebrow { font-size: 0.75rem; font-weight: 800; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 5px; }
+        .vocab-title { font-size: 3.2rem; font-weight: 800; line-height: 1.1; margin-bottom: 10px; color: #fff; text-transform: uppercase; letter-spacing: -1px;}
+        
+        .vocab-card { background: #181818; border-radius: 8px; padding: 25px; transition: background 0.2s; }
+        .vocab-card:hover { background: #282828; }
+        .vocab-card-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 1.5px; color: var(--accent); text-transform: uppercase; display: block; margin-bottom: 12px; }
+        .vocab-def-text { font-size: 1.15rem; color: #fff; line-height: 1.5; font-weight: 600; margin-bottom: 20px;}
+        .vocab-ex-text { font-size: 1.05rem; color: var(--text-dim); font-style: italic; line-height: 1.5; margin: 0;}
+        
+        .vocab-speak-box {
+            margin-top: auto; 
+            background: linear-gradient(135deg, #1DB954 0%, #116a30 100%);
+            border-radius: 12px; padding: 25px; color: #000;
+            position: relative;
+        }
+        .vocab-speak-box::before {
+            content: 'FOLLOW UP';
+            position: absolute; top: -10px; left: 20px;
+            background: #000; color: var(--accent);
+            font-size: 0.7rem; font-weight: 800;
+            padding: 4px 10px; border-radius: 500px;
+            letter-spacing: 1px;
+        }
+        .vocab-speak-box p { color: #000; font-weight: 800; margin: 0; font-size: 1.15rem; line-height: 1.4; }
+
+        /* Whiteboard Panel */
+        .whiteboard-panel { position: fixed; bottom: 90px; right: 20px; width: 400px; height: 500px; background: #181818; border: 1px solid #282828; border-radius: 12px 12px 0 0; z-index: 101; transform: translateY(120%); display: flex; flex-direction: column; transition: 0.4s cubic-bezier(0.3, 0, 0, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.5);}
+        .whiteboard-panel.open { transform: translateY(0); }
+        .wb-header { padding: 18px 20px; border-bottom: 1px solid #282828; display: flex; justify-content: space-between; font-weight: 700; color: #fff;}
+        .wb-content { flex: 1; padding: 20px; outline: none; color: var(--accent); font-family: monospace; font-size: 1.1rem; resize: none; border: none; background: transparent; }
+
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-5px); } 50% { transform: translateX(5px); } }
+
+        .highlight-zone { padding: 25px; background: #181818; border-radius: 12px; margin-bottom: 20px; font-size: 1.2rem;}
+        .hotspot { color: var(--accent); cursor: pointer; text-decoration: underline; font-weight: 700;}
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo">WOLF LABS <span>|</span> EXTENDED EDITION</div>
+        <div class="controls">
+            <button class="icon-btn" onclick="toggleWhiteboard()" title="Live Whiteboard">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </button>
+            <button class="icon-btn" onclick="toggleFullscreen()" title="Fullscreen">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            </button>
+        </div>
+        <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+    </header>
+
+    <main id="main-container">
+        <!-- STEPS INJECTED VIA JS -->
+    </main>
+
+    <nav class="nav-bar">
+        <button class="btn" style="background: transparent; color: #fff; padding: 16px 0;" id="prevBtn" onclick="prevStep()" disabled>BACK</button>
+        <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-dim); letter-spacing: 2px;" id="step-counter">STEP 0 / 41</div>
+        <button class="btn btn-accent" id="nextBtn" onclick="nextStep()">NEXT</button>
+    </nav>
+
+    <!-- PREMIUM VOCAB PANEL -->
+    <aside class="vocab-panel" id="vocabPanel">
+        <button class="vocab-close" onclick="closeVocab()">✕</button>
+        
+        <div>
+            <p class="vocab-eyebrow">System Dictionary</p>
+            <h2 id="vocab-title" class="vocab-title">WORD</h2>
+        </div>
+
+        <div class="vocab-card">
+            <span class="vocab-card-label">Definition</span>
+            <p id="vocab-def" class="vocab-def-text">Definition here.</p>
+            
+            <span class="vocab-card-label" style="margin-top: 25px;">Context Example</span>
+            <p id="vocab-ex" class="vocab-ex-text">"Example sentence here."</p>
+        </div>
+        
+        <div class="vocab-speak-box">
+            <p id="vocab-speak">Follow up question here.</p>
+        </div>
+    </aside>
+
+    <!-- WHITEBOARD -->
+    <aside class="whiteboard-panel" id="whiteboardPanel">
+        <div class="wb-header">
+            <span>📝 Live Whiteboard</span>
+            <button class="icon-btn" style="width: 24px; height: 24px; border: none; color: #fff;" onclick="toggleWhiteboard()">✕</button>
+        </div>
+        <textarea class="wb-content" placeholder="Teacher: Type live corrections, grammar notes, or vocabulary here..."></textarea>
+    </aside>
+
+    <script>
+        // --- VOCABULARY DATA SYSTEM ---
+        const vocabData = {
+            'choke': {
+                def: 'To fail at doing something because of intense pressure or nervousness.',
+                ex: 'He is a great player, but he tends to choke during the finals.',
+                speak: 'Have you ever "choked" during a test or an important game? What happened?'
+            },
+            'preoccupied': {
+                def: 'Thinking or worrying about something too much, ignoring other things.',
+                ex: 'She was so preoccupied with her speech that she forgot to eat lunch.',
+                speak: 'When you are studying or working, what usually makes you preoccupied?'
+            },
+            'inevitable': {
+                def: 'Certain to happen; impossible to avoid.',
+                ex: 'Making mistakes when learning a new language is inevitable.',
+                speak: 'What is one thing in daily life that you think is inevitable?'
+            },
+            'vulnerable': {
+                def: 'Exposed to the possibility of being attacked or harmed (emotionally or physically).',
+                ex: 'Without a clear plan, you are vulnerable to stress.',
+                speak: 'In what situations do you feel the most vulnerable or unprotected?'
+            },
+            'working memory': {
+                def: 'The part of your brain that holds short-term information, like a phone number.',
+                ex: 'When I get nervous, my working memory crashes and I forget everything.',
+                speak: 'What happens to your working memory when you are extremely stressed?'
+            },
+            'butterflies in my stomach': {
+                def: 'Feeling nervous or anxious, usually right before an event.',
+                ex: 'I always get butterflies in my stomach before a job interview.',
+                speak: 'When was the last time you had butterflies in your stomach?'
+            },
+            'sweating bullets': {
+                def: 'Being extremely nervous or scared.',
+                ex: 'He was sweating bullets while waiting for the test results.',
+                speak: 'What kind of situation makes you sweat bullets?'
+            },
+            'lose my train of thought': {
+                def: 'To forget what you were saying or thinking about.',
+                ex: 'I was interrupted, and I completely lost my train of thought.',
+                speak: 'What do you do to recover when you lose your train of thought?'
+            }
+        };
+
+        // --- DATA STRUCTURE FOR 42 STEPS (100% ENGLISH) ---
+        const stepsData = [
+            // 0
+            `<div class="glass-panel">
+                <h2>👨‍🏫 Teacher Guide (Extended)</h2>
+                <p>Welcome to the Wolf Labs Interactive Engine - Extended Edition.</p>
+                <div style="border-left: 4px solid var(--accent); padding-left: 20px; margin: 20px 0;">
+                    <p><strong>Objective:</strong> Absolute mastery of Modals (Should, Have to, Must) and pressure vocabulary (B1).</p>
+                    <p><strong>Rule:</strong> 80% student speaking time. Never skip the 'SPEAKING HUB'.</p>
+                    <p><strong>New Features:</strong> Transcript analysis, memory mini-games, personal pressure questions, debate roulettes, and multiple scenarios.</p>
+                </div>
+                <button class="btn btn-accent" style="margin-top:10px;" onclick="this.style.display='none'; unlockPrompt('p0')">Initialize System</button>
+                <div class="speaking-hub" id="p0"><p>Teacher, ask the student how they are feeling today before starting the engine.</p></div>
+            </div>`,
+            // 1
+            `<div class="glass-panel" style="text-align: center; background: transparent;">
+                <p style="color: var(--accent); font-weight: 800; letter-spacing: 2px;">PSYCHOLOGY MODULE</p>
+                <h1 style="font-size: 4.5rem; margin-top: 10px;">Under Pressure</h1>
+                <p style="font-size: 1.3rem;">Why do we fail when it matters most, and how can we stay calm?</p>
+                <div style="background: rgba(255,255,255,0.05); padding: 25px; border-radius: 12px; display: inline-block; margin: 30px 0;">
+                    <p style="margin: 0; font-size: 0.8rem; color: var(--text-dim); letter-spacing: 1px;">GRAMMAR TARGET</p>
+                    <h3 style="margin-top: 5px; font-size: 1.5rem;">Modals of Advice & Obligation</h3>
+                </div><br>
+                <button class="btn btn-accent" onclick="this.style.display='none'; unlockPrompt('p1')">Enter the Zone</button>
+                <div class="speaking-hub" id="p1" style="text-align: left;"><p>Read the title out loud. What comes to your mind when you hear "Under Pressure"?</p></div>
+            </div>`,
+            // 2
+            `<div class="glass-panel">
+                <h2>System Calibration: Self-Assessment</h2>
+                <p>Adjust the sliders (1 = Never, 10 = Always) to show how you react to pressure.</p>
+                <div class="slider-group"><label>1. My mind goes blank during exams.</label><input type="range" min="1" max="10" value="5" onchange="checkSliders('p2')"></div>
+                <div class="slider-group"><label>2. I feel physical symptoms (sweating) before a presentation.</label><input type="range" min="1" max="10" value="5" onchange="checkSliders('p2')"></div>
+                <div class="slider-group"><label>3. I perform worse when people are watching me.</label><input type="range" min="1" max="10" value="5" onchange="checkSliders('p2')"></div>
+                <div class="speaking-hub" id="p2"><p>Explain your numbers. Which situation makes you the most nervous?</p></div>
+            </div>`,
+            // 3
+            `<div>
+                <h2>Critical Scenario</h2>
+                <p>You are taking the final English exam. You look at the first question and realize you forgot the answer. What is your instinct?</p>
+                <div class="choice-grid">
+                    <div class="choice-card" onclick="selectCard(this, '.choice-grid'); unlockPrompt('p3')"><h3>🧠 Panic</h3><p style="font-size: 1rem; margin:0;">Try to force the brain to remember, getting stressed.</p></div>
+                    <div class="choice-card" onclick="selectCard(this, '.choice-grid'); unlockPrompt('p3')"><h3>🌬️ Breathe</h3><p style="font-size: 1rem; margin:0;">Skip the question and come back later calmly.</p></div>
+                </div>
+                <div class="speaking-hub" id="p3"><p>Have you ever "blanked out" during a test? What did you do?</p></div>
+            </div>`,
+            // 4
+            `<div class="glass-panel">
+                <h2>Data Decryption: Key Concepts</h2>
+                <p>Click the highlighted words to unlock definitions in the System Dictionary.</p>
+                <div class="highlight-zone">
+                    Experts sometimes <span class="vocab-word" onclick="openVocab('choke', 'p4')">choke</span> under pressure because they are <span class="vocab-word" onclick="openVocab('preoccupied', 'p4')">preoccupied</span> with failure. 
+                    Nervousness is <span class="vocab-word" onclick="openVocab('inevitable', 'p4')">inevitable</span>, making us feel <span class="vocab-word" onclick="openVocab('vulnerable', 'p4')">vulnerable</span>.
+                </div>
+                <div class="speaking-hub" id="p4"><p>Use the word "Inevitable" in a sentence about learning English.</p></div>
+            </div>`,
+            // 5
+            `<div>
+                <h2>Vocab Match Protocol</h2>
+                <p>Click the word, then click its correct meaning to connect them.</p>
+                <div class="choice-grid" id="match-grid">
+                    <div class="choice-card" data-val="1" onclick="handleMatch(this, 'p5')">Choke</div>
+                    <div class="choice-card" data-val="2" onclick="handleMatch(this, 'p5')">Thinking about worries</div>
+                    <div class="choice-card" data-val="3" onclick="handleMatch(this, 'p5')">Vulnerable</div>
+                    <div class="choice-card" data-val="1" onclick="handleMatch(this, 'p5')">Fail under pressure</div>
+                    <div class="choice-card" data-val="2" onclick="handleMatch(this, 'p5')">Preoccupied</div>
+                    <div class="choice-card" data-val="3" onclick="handleMatch(this, 'p5')">Exposed to harm</div>
+                </div>
+                <div class="speaking-hub" id="p5"><p>Teacher, ask the student to pronounce the 3 target words clearly.</p></div>
+            </div>`,
+            // 6 
+            `<div class="glass-panel" style="text-align:center;">
+                <h2>Pre-Flight Check</h2>
+                <p>Before we dive into the science of choking, let's think about pressure.</p>
+                <div class="highlight-zone" style="font-size: 1.5rem; font-weight: 700;">
+                    What is the WORST advice you can give to someone who is extremely nervous?
+                </div>
+                <button class="btn btn-accent" onclick="this.style.display='none'; unlockPrompt('p6')">Reveal Hub</button>
+                <div class="speaking-hub" id="p6" style="text-align:left;"><p>Discuss your answer. Why is that advice so bad?</p></div>
+            </div>`,
+            // 7
+            `<div style="text-align: center;">
+                <h2>Video Input Analysis</h2>
+                <p>Watch this breakdown of performance anxiety.</p>
+                <iframe width="100%" height="400" src="https://www.youtube.com/embed/CqgmozFr_GM?rel=0" frameborder="0" allowfullscreen style="border-radius: 12px; margin-bottom: 20px;"></iframe>
+                <br><button class="btn btn-accent" onclick="this.style.display='none'; unlockPrompt('p7')">I finished watching</button>
+                <div class="speaking-hub" id="p7" style="text-align: left;"><p>What is the main idea of this video? Summarize it in 2 sentences.</p></div>
+            </div>`,
+            // 8 
+            `<div class="glass-panel" style="text-align:center;">
+                <h2>Debriefing</h2>
+                <p>You have processed the video data.</p>
+                <button class="btn btn-accent" onclick="this.style.display='none'; unlockPrompt('p8')">Activate Hub</button>
+                <div class="speaking-hub" id="p8" style="text-align:left;"><p>Initial thoughts: Did anything in the video surprise you about how the brain works under pressure?</p></div>
+            </div>`,
+            // 9
+            `<div>
+                <h2>Fact Check Protocol</h2>
+                <p>Classify the statements based on the video.</p>
+                <div class="toggle-row"><span>1. Choking only happens to amateurs.</span>
+                    <div style="display:flex; gap: 10px;"><button class="toggle-btn" onclick="checkTrueFalse(this, false, 'p9')">True</button><button class="toggle-btn" onclick="checkTrueFalse(this, true, 'p9')">False</button></div>
+                </div>
+                <div class="toggle-row"><span>2. Over-analyzing makes performance worse.</span>
+                    <div style="display:flex; gap: 10px;"><button class="toggle-btn" onclick="checkTrueFalse(this, true, 'p9')">True</button><button class="toggle-btn" onclick="checkTrueFalse(this, false, 'p9')">False</button></div>
+                </div>
+                <div class="speaking-hub" id="p9"><p>Do you agree that thinking too much about "how to walk" makes you stumble? Why?</p></div>
+            </div>`,
+            // 10 (NEW - TRANSCRIPT ANALYSIS 1)
+            `<div class="glass-panel">
+                <h2>Script Analysis: Obligation</h2>
+                <p>Let's look at the exact transcript from the video. Find and click the phrase that shows <strong>strong necessity or obligation</strong>.</p>
+                <div class="highlight-zone" style="text-align: center; font-size: 1.4rem; line-height: 2;">
+                    "When relevant and irrelevant thoughts compete for the same attention, <br>
+                    <span class="error-word" onclick="genericCorrect(this, false)">something</span>
+                    <span class="error-word" onclick="genericCorrect(this, true); unlockPrompt('p10')">has to</span>
+                    <span class="error-word" onclick="genericCorrect(this, false)">give."</span>
+                </div>
+                <div class="speaking-hub" id="p10"><p>What does "something has to give" mean? (Hint: it means something will eventually break or fail).</p></div>
+            </div>`,
+            // 11 (NEW - TRANSCRIPT ANALYSIS 2)
+            `<div class="glass-panel">
+                <h2>Script Transformation: Advice</h2>
+                <p>In the video, the speaker says:<br><br>
+                <em style="color:var(--accent); font-size:1.2rem;">"First, it helps to practice under stressful conditions."</em><br><br>
+                How would you rewrite this statement using a modal of advice?</p>
+                <div class="list-grid">
+                    <div class="list-item" onclick="genericCorrect(this, false)">A) You have to practice under stressful conditions.</div>
+                    <div class="list-item" onclick="genericCorrect(this, true); unlockPrompt('p11')">B) You should practice under stressful conditions.</div>
+                    <div class="list-item" onclick="genericCorrect(this, false)">C) You must practice under stressful conditions.</div>
+                </div>
+                <div class="speaking-hub" id="p11"><p>Read the correct sentence aloud. Why is "should" better than "must" here?</p></div>
+            </div>`,
+            // 12
+            `<div class="glass-panel">
+                <h2>Grammar Discovery: Advice</h2>
+                <p>Read the transformed sentence. What is the function of the underlined word?</p>
+                <div class="highlight-zone" style="text-align:center;">"You <u style="color:var(--accent); font-weight:800; text-decoration:none;">should</u> practice under pressure."</div>
+                <div class="list-grid" style="margin-top:20px;">
+                    <div class="list-item" onclick="genericCorrect(this, false)">A) It shows a strict obligation (law).</div>
+                    <div class="list-item" onclick="genericCorrect(this, true); unlockPrompt('p12')">B) It gives a recommendation or good advice.</div>
+                </div>
+                <div class="speaking-hub" id="p12"><p>Give a friend one piece of advice on how to relax using "You should...".</p></div>
+            </div>`,
+            // 13
+            `<div class="glass-panel">
+                <h2>Under Pressure: Real Life</h2>
+                <p>Let's connect this to your personal experience.</p>
+                <button class="btn btn-accent" onclick="this.style.display='none'; unlockPrompt('p13')">Reflect</button>
+                <div class="speaking-hub" id="p13"><p>Have you ever received advice that actually made you MORE nervous? What was it?</p></div>
+            </div>`,
+            // 14
+            `<div class="glass-panel">
+                <h2>Syntactic Construction 1</h2>
+                <p>Rebuild the advice by clicking the words in order.</p>
+                <div class="drop-zone" id="dz1"></div>
+                <div class="word-bank" id="wb1">
+                    <div class="word-chip" onclick="moveWord(this, 'dz1', ['You','should','breathe','deeply'], 'p14')">deeply</div>
+                    <div class="word-chip" onclick="moveWord(this, 'dz1', ['You','should','breathe','deeply'], 'p14')">should</div>
+                    <div class="word-chip" onclick="moveWord(this, 'dz1', ['You','should','breathe','deeply'], 'p14')">You</div>
+                    <div class="word-chip" onclick="moveWord(this, 'dz1', ['You','should','breathe','deeply'], 'p14')">breathe</div>
+                </div>
+                <div class="speaking-hub" id="p14"><p>Now, create the negative form aloud. (You shouldn't...)</p></div>
+            </div>`,
+            // 15
+            `<div class="glass-panel">
+                <h2>Grammar Discovery: Obligation</h2>
+                <p>Sometimes, advice isn't enough. Sometimes it's a rule.</p>
+                <div class="highlight-zone" style="text-align:center;">"To get the job, you <u style="color:var(--accent); font-weight:800; text-decoration:none;">have to</u> pass the interview."</div>
+                <div class="list-grid" style="margin-top:20px;">
+                    <div class="list-item" onclick="genericCorrect(this, true); unlockPrompt('p15')">A) It is necessary; there is no other choice.</div>
+                    <div class="list-item" onclick="genericCorrect(this, false)">B) It is just a friendly suggestion.</div>
+                </div>
+                <div class="speaking-hub" id="p15"><p>What is something you "have to" do every morning?</p></div>
+            </div>`,
+            // 16
+            `<div class="glass-panel">
+                <h2>Syntactic Construction 2</h2>
+                <p>Rebuild the obligation sentence.</p>
+                <div class="drop-zone" id="dz2"></div>
+                <div class="word-bank" id="wb2">
+                    <div class="word-chip" onclick="moveWord(this, 'dz2', ['We','have','to','focus','now'], 'p16')">to</div>
+                    <div class="word-chip" onclick="moveWord(this, 'dz2', ['We','have','to','focus','now'], 'p16')">focus</div>
+                    <div class="word-chip" onclick="moveWord(this, 'dz2', ['We','have','to','focus','now'], 'p16')">have</div>
+                    <div class="word-chip" onclick="moveWord(this, 'dz2', ['We','have','to','focus','now'], 'p16')">now</div>
+                    <div class="word-chip" onclick="moveWord(this, 'dz2', ['We','have','to','focus','now'], 'p16')">We</div>
+                </div>
+                <div class="speaking-hub" id="p16"><p>Tell me one thing you "don't have to" do on weekends.</p></div>
+            </div>`,
+            // 17 
+            `<div class="glass-panel">
+                <h2>Under Pressure: Rules</h2>
+                <p>Let's connect this to your personal experience.</p>
+                <button class="btn btn-accent" onclick="this.style.display='none'; unlockPrompt('p17')">Reflect</button>
+                <div class="speaking-hub" id="p17"><p>Think of a strict rule ('must' or 'have to') in your life or job. Does it cause you pressure or help you perform better?</p></div>
+            </div>`,
+            // 18
+            `<div>
+                <h2>Classification System</h2>
+                <p>Categorize the sentence. Click the correct classification.</p>
+                <div class="highlight-zone" style="text-align: center; font-size: 1.5rem; margin-bottom: 20px;">"You must wear a seatbelt."</div>
+                <div class="choice-grid">
+                    <div class="choice-card" onclick="genericCorrect(this, false)">Friendly Advice (Should)</div>
+                    <div class="choice-card" onclick="genericCorrect(this, true); unlockPrompt('p18')">Strong Obligation (Must / Have to)</div>
+                </div>
+                <div class="speaking-hub" id="p18"><p>Give an example of a "must" rule in your country or school.</p></div>
+            </div>`,
+            // 19
+            `<div>
+                <h2>Classification System 2</h2>
+                <p>Categorize the sentence.</p>
+                <div class="highlight-zone" style="text-align: center; font-size: 1.5rem; margin-bottom: 20px;">"You ought to drink more water."</div>
+                <div class="choice-grid">
+                    <div class="choice-card" onclick="genericCorrect(this, true); unlockPrompt('p19')">Friendly Advice (Ought to = Should)</div>
+                    <div class="choice-card" onclick="genericCorrect(this, false)">Strong Obligation</div>
+                </div>
+                <div class="speaking-hub" id="p19"><p>What is the difference between "ought to" and "should"? (Teacher explains if needed).</p></div>
+            </div>`,
+            // 20
+            `<div class="glass-panel">
+                <h2>Live Scenario Support (Chat)</h2>
+                <p>Your friend texts you before a big game.</p>
+                <div class="chat-container">
+                    <div class="msg friend">"I'm shaking. If I miss this penalty, we lose the championship."</div>
+                    <div class="chat-options" id="chat1">
+                        <div class="chat-option" onclick="handleChat(this, false, 'chat1', 'p20')">You have to panic right now!</div>
+                        <div class="chat-option" onclick="handleChat(this, true, 'chat1', 'p20')">You should take a deep breath. You've practiced this a million times.</div>
+                    </div>
+                </div>
+                <div class="speaking-hub" id="p20"><p>What else would you say to calm them down? Speak as if you are talking to them.</p></div>
+            </div>`,
+            // 21
+            `<div class="glass-panel">
+                <h2>Interactive Reading: The Brain</h2>
+                <p>Click the <span class="hotspot">highlighted text</span> to reveal its meaning.</p>
+                <div class="highlight-zone" style="line-height: 1.8;">
+                    When under pressure, our <span class="hotspot" onclick="openVocab('working memory', 'p21')">working memory</span> gets overloaded with worries. 
+                    This causes the brain to "crash" like an old computer opening too many tabs.
+                </div>
+                <div class="speaking-hub" id="p21"><p>Have you ever felt your brain "crash" like a computer? Describe the situation.</p></div>
+            </div>`,
+            // 22
+            `<div>
+                <h2>Reading Comprehension</h2>
+                <p>Based on the text above, why does the brain crash?</p>
+                <div class="list-grid">
+                    <div class="list-item" onclick="genericCorrect(this, false)">A) Because it doesn't have enough oxygen.</div>
+                    <div class="list-item" onclick="genericCorrect(this, true); unlockPrompt('p22')">B) Because working memory is overloaded with worries.</div>
+                    <div class="list-item" onclick="genericCorrect(this, false)">C) Because we forget to breathe.</div>
+                </div>
+                <div class="speaking-hub" id="p22"><p>Do you think multitasking causes the same "crash"? Why?</p></div>
+            </div>`,
+            // 23
+            `<div class="glass-panel">
+                <h2>Idiom Discovery</h2>
+                <p>We use idioms to describe pressure. Click them to reveal meaning.</p>
+                <div class="list-grid">
+                    <div class="list-item" onclick="openVocab('butterflies in my stomach', 'p23')">🦋 Butterflies in my stomach</div>
+                    <div class="list-item" onclick="openVocab('sweating bullets', 'p23')">💧 Sweating bullets</div>
+                    <div class="list-item" onclick="openVocab('lose my train of thought', 'p23')">🚂 Lose my train of thought</div>
+                </div>
+                <p style="font-size:0.9rem; color:var(--text-dim); margin-top:15px; font-weight: 600;">(Explore the idioms to continue)</p>
+                <div class="speaking-hub" id="p23"><p>Which of these idioms happens to you the most? Give an example.</p></div>
+            </div>`,
+            // 24
+            `<div class="glass-panel">
+                <h2>Under Pressure: Physical Reactions</h2>
+                <p>Let's connect this to your personal experience.</p>
+                <button class="btn btn-accent" onclick="this.style.display='none'; unlockPrompt('p24')">Reflect</button>
+                <div class="speaking-hub" id="p24"><p>When you "lose your train of thought" in English, how does your body react? Do you get butterflies or sweat bullets?</p></div>
+            </div>`,
+            // 25
+            `<div class="glass-panel">
+                <h2>Idiom Practice</h2>
+                <p>Complete the sentence logically.</p>
+                <div class="highlight-zone" style="text-align:center;">"During the speech, someone's phone rang, and I completely ________."</div>
+                <div class="list-grid" style="margin-top:20px;">
+                    <div class="list-item" onclick="genericCorrect(this, false)">A) had butterflies in my stomach</div>
+                    <div class="list-item" onclick="genericCorrect(this, true); unlockPrompt('p25')">B) lost my train of thought</div>
+                </div>
+                <div class="speaking-hub" id="p25"><p>What do you do when you lose your train of thought in English?</p></div>
+            </div>`,
+            // 26
+            `<div class="glass-panel" style="text-align: center;">
+                <h2>Working Memory Simulator</h2>
+                <p>Let's test your brain under pressure. Memorize this sequence for 3 seconds.</p>
+                <div class="memory-box" id="mem-seq" style="font-size: 1.8rem;">FOCUS - BREATHE - CALM - ACTION</div>
+                <button class="btn btn-accent" id="mem-start" onclick="startMemoryGame()">Start Pressure Test</button>
+                <div id="mem-test" style="display:none; margin-top:30px;">
+                    <p style="font-weight:700;">Now, click the words in the exact sequence.</p>
+                    <div style="display: flex; gap: 15px; justify-content:center; margin-top: 20px; flex-wrap:wrap;">
+                        <button class="memory-btn" onclick="checkMem(this, 'CALM', 'p26')">CALM</button>
+                        <button class="memory-btn" onclick="checkMem(this, 'FOCUS', 'p26')">FOCUS</button>
+                        <button class="memory-btn" onclick="checkMem(this, 'ACTION', 'p26')">ACTION</button>
+                        <button class="memory-btn" onclick="checkMem(this, 'BREATHE', 'p26')">BREATHE</button>
+                    </div>
+                </div>
+                <div class="speaking-hub" id="p26" style="text-align: left;"><p>How did the timer/pressure make you feel during that simple task?</p></div>
+            </div>`,
+            // 27
+            `<div>
+                <h2>Debrief: The Simulator</h2>
+                <p>The previous test simulated pressure.</p>
+                <div class="highlight-zone">
+                    <p style="margin:0; font-size:1.1rem; line-height: 1.6;">When there is a goal and a timer, our brain splits focus between <strong style="color:var(--accent);">doing the task</strong> and <strong style="color:var(--accent);">worrying about the result</strong>.</p>
+                </div>
+                <button class="btn btn-accent" style="margin-top: 10px;" onclick="this.style.display='none'; unlockPrompt('p27')">Acknowledge</button>
+                <div class="speaking-hub" id="p27"><p>In real life, what acts as the "timer" that makes you nervous? (e.g., your boss waiting, a crowd).</p></div>
+            </div>`,
+            // 28 (FIXED HTML QUOTES ISSUE HERE)
+            `<div class="glass-panel">
+                <h2>Solutions: Pre-performance Routines</h2>
+                <p>Athletes use rituals to calm down. Click to reveal.</p>
+                <div class="choice-grid">
+                    <div class="choice-card" onclick="revealRoutine(this, 'Deep Breathing', 'Lowers heart rate.', 'p28')">Reveal 1</div>
+                    <div class="choice-card" onclick="revealRoutine(this, 'Cue Word', 'Saying &lt;i&gt;Focus&lt;/i&gt; or &lt;i&gt;Smooth&lt;/i&gt;.', 'p28')">Reveal 2</div>
+                    <div class="choice-card" onclick="revealRoutine(this, 'Rhythm', 'Bouncing the ball 3 times.', 'p28')">Reveal 3</div>
+                </div>
+                <div class="speaking-hub" id="p28"><p>Have you ever noticed a famous athlete doing a strange ritual before a game? E.g., Rafael Nadal.</p></div>
+            </div>`,
+            // 29
+            `<div class="glass-panel">
+                <h2>Build Your Routine</h2>
+                <p>Select 2 things you <strong>should</strong> do before your next English presentation.</p>
+                <div class="list-grid" id="routine-list">
+                    <div class="list-item" onclick="this.style.background='var(--accent)'; this.style.color='#000'; checkMyRoutine('p29')">Drink a glass of water</div>
+                    <div class="list-item" onclick="this.style.background='var(--accent)'; this.style.color='#000'; checkMyRoutine('p29')">Listen to hype music</div>
+                    <div class="list-item" onclick="this.style.background='var(--accent)'; this.style.color='#000'; checkMyRoutine('p29')">Review notes intensely</div>
+                    <div class="list-item" onclick="this.style.background='var(--accent)'; this.style.color='#000'; checkMyRoutine('p29')">Do breathing exercises</div>
+                </div>
+                <div class="speaking-hub" id="p29"><p>Explain why you chose these two. "Before a presentation, I should..."</p></div>
+            </div>`,
+            // 30
+            `<div class="glass-panel">
+                <h2>Error Detection Protocol</h2>
+                <p>There is a grammatical error in this advice. Click the wrong word.</p>
+                <div class="highlight-zone" style="text-align: center;">
+                    <div class="error-sentence">
+                        <span class="error-word" onclick="genericCorrect(this, false)">You</span>
+                        <span class="error-word" onclick="genericCorrect(this, false)">should</span>
+                        <span class="error-word" onclick="genericCorrect(this, true); unlockPrompt('p30')">to</span>
+                        <span class="error-word" onclick="genericCorrect(this, false)">relax</span>
+                        <span class="error-word" onclick="genericCorrect(this, false)">more.</span>
+                    </div>
+                </div>
+                <div class="speaking-hub" id="p30"><p>What is the rule? (Teacher: remind that modals don't use "to"). Give a correct sentence.</p></div>
+            </div>`,
+            // 31
+            `<div class="glass-panel">
+                <h2>Solutions: External Focus</h2>
+                <p>Studies show focusing <strong>internally</strong> (on your body) causes choking. Focusing <strong>externally</strong> (on the goal) leads to success.</p>
+                <div class="choice-grid">
+                    <div class="choice-card" style="border:2px solid var(--incorrect);">Internal:<br>"Keep my elbow straight"</div>
+                    <div class="choice-card" style="border:2px solid var(--correct);">External:<br>"Hit the ball into the net"</div>
+                </div>
+                <br>
+                <button class="btn btn-accent" onclick="this.style.display='none'; unlockPrompt('p31')">Understood</button>
+                <div class="speaking-hub" id="p31"><p>When playing an instrument or typing on a keyboard, what happens if you look at your fingers?</p></div>
+            </div>`,
+            // 32
+            `<div>
+                <h2>Classification: Focus</h2>
+                <p>Is this thought Internal (bad) or External (good)?</p>
+                <div class="highlight-zone" style="text-align: center; font-size: 1.5rem; margin-bottom: 20px;">"Make sure my tongue is in the right position to pronounce the TH sound."</div>
+                <div class="choice-grid">
+                    <div class="choice-card" onclick="genericCorrect(this, true); unlockPrompt('p32')">Internal Focus</div>
+                    <div class="choice-card" onclick="genericCorrect(this, false)">External Focus</div>
+                </div>
+                <div class="speaking-hub" id="p32"><p>So, when speaking English, what should your "External Focus" be? (Hint: communication!)</p></div>
+            </div>`,
+            // 33
+            `<div class="glass-panel">
+                <h2>Live Scenario Support 2</h2>
+                <p>Your coworker is nervous about meeting the boss.</p>
+                <div class="chat-container">
+                    <div class="msg friend">"I have to present the sales numbers. I keep forgetting my script!"</div>
+                    <div class="chat-options" id="chat2">
+                        <div class="chat-option" onclick="handleChat(this, true, 'chat2', 'p33')">You shouldn't memorize a script. Just focus on the main ideas you want to share.</div>
+                        <div class="chat-option" onclick="handleChat(this, false, 'chat2', 'p33')">You must to write everything on your hand.</div>
+                    </div>
+                </div>
+                <div class="speaking-hub" id="p33"><p>Why is "must to write" grammatically incorrect? Correct it aloud.</p></div>
+            </div>`,
+            // 34
+            `<div>
+                <h2>The Arena: Phase 1</h2>
+                <p>Click a card to reveal a situation. Speak for 45 seconds giving advice.</p>
+                <div class="arena-grid">
+                    <div class="arena-card" onclick="flipCard(this, 'p34')"><div class="card-inner"><div class="card-front">1</div><div class="card-back"><h3>First Date</h3><p>Friend is sweating bullets before a date.</p><br><i>Use: Should, Shouldn't</i></div></div></div>
+                    <div class="arena-card" onclick="flipCard(this, 'p34')"><div class="card-inner"><div class="card-front">2</div><div class="card-back"><h3>Driving Test</h3><p>Sibling failed twice due to nerves.</p><br><i>Use: Have to, Must</i></div></div></div>
+                </div>
+                <div class="speaking-hub" id="p34"><p>Teacher, evaluate fluency and accuracy.</p></div>
+            </div>`,
+            // 35
+            `<div>
+                <h2>The Arena: Phase 2</h2>
+                <p>Professional environments.</p>
+                <div class="arena-grid">
+                    <div class="arena-card" onclick="flipCard(this, 'p35')"><div class="card-inner"><div class="card-front">3</div><div class="card-back"><h3>Job Interview</h3><p>Candidate's mind always goes blank.</p><br><i>Suggest a Pre-routine</i></div></div></div>
+                    <div class="arena-card" onclick="flipCard(this, 'p35')"><div class="card-inner"><div class="card-front">4</div><div class="card-back"><h3>Live Concert</h3><p>Musician is worried about finger placement.</p><br><i>Suggest External Focus</i></div></div></div>
+                </div>
+                <div class="speaking-hub" id="p35"><p>Teacher, focus on pronunciation of target vocabulary.</p></div>
+            </div>`,
+            // 36
+            `<div class="glass-panel">
+                <h2>Debate System</h2>
+                <p>Do you agree or disagree? Slide to your position.</p>
+                <h3 style="text-align:center; margin: 40px 0; font-size: 1.5rem;">"Some people are naturally immune to pressure and never choke."</h3>
+                <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--text-dim);"><span>Disagree</span><span>Agree</span></div>
+                <input type="range" min="1" max="100" value="50" onchange="unlockPrompt('p36')">
+                <div class="speaking-hub" id="p36"><p>Defend your position. Do you think even elite professionals feel fear?</p></div>
+            </div>`,
+            // 37
+            `<div class="glass-panel" style="text-align:center;">
+                <h2>Roleplay Generator</h2>
+                <p>Click the button to generate your character.</p>
+                <div class="highlight-zone" id="role-box" style="font-size:1.5rem; margin:30px 0; font-weight:700;">???</div>
+                <button class="btn btn-accent" onclick="this.style.display='none'; generateRole('p37')">Generate Scenario</button>
+                <div class="speaking-hub" id="p37" style="text-align: left;"><p>Teacher plays the nervous person. Student acts as the generated character and gives advice.</p></div>
+            </div>`,
+            // 38
+            `<div class="glass-panel">
+                <h2>Rapid Sentence Transformation</h2>
+                <p>Read the formal rule, and transform it using <strong>Must</strong> or <strong>Have to</strong> aloud.</p>
+                <div class="highlight-zone" style="text-align:center; background:rgba(233, 20, 41, 0.1); border: 1px solid rgba(233,20,41,0.3);">
+                    "It is strictly required to turn off your phone during the flight."
+                </div>
+                <br>
+                <button class="btn btn-accent" onclick="this.style.display='none'; unlockPrompt('p38')">Reveal Hub</button>
+                <div class="speaking-hub" id="p38"><p>"You must / have to turn off your phone..." - Now give another airplane rule!</p></div>
+            </div>`,
+            // 39
+            `<div class="glass-panel">
+                <h2>Rapid Sentence Transformation 2</h2>
+                <p>Transform this suggestion using <strong>Shouldn't</strong>.</p>
+                <div class="highlight-zone" style="text-align:center; background:rgba(29, 185, 84, 0.1); border: 1px solid rgba(29,185,84,0.3);">
+                    "It's a bad idea to drink 5 cups of coffee before an exam."
+                </div>
+                <br>
+                <button class="btn btn-accent" onclick="this.style.display='none'; unlockPrompt('p39')">Reveal Hub</button>
+                <div class="speaking-hub" id="p39"><p>"You shouldn't drink..." - Why? What physical symptoms will it cause?</p></div>
+            </div>`,
+            // 40
+            `<div>
+                <h2>The Final Challenge</h2>
+                <p>You are coaching an Olympic gymnast seconds before her final routine. She says: "I'm focusing entirely on how my ankle bends."</p>
+                <div class="choice-grid">
+                    <div class="choice-card" onclick="genericCorrect(this, false)">Tell her to focus harder on the ankle.</div>
+                    <div class="choice-card" onclick="genericCorrect(this, true); unlockPrompt('p40')">Tell her to focus on landing gracefully on the mat (External).</div>
+                </div>
+                <div class="speaking-hub" id="p40"><p>Give her your final motivational speech using 1 advice (should) and 1 obligation (have to).</p></div>
+            </div>`,
+            // 41
+            `<div class="glass-panel" style="text-align: center; border: 1px solid var(--correct); background: rgba(29, 185, 84, 0.05);">
+                <h1 style="color: var(--correct);">Mission Complete</h1>
+                <p style="font-size: 1.2rem; font-weight: 600;">The Training System has been successfully completed.</p>
+                <div style="text-align: left; background: #121212; padding: 30px; border-radius: 12px; margin: 30px auto; max-width: 500px;">
+                    <h3 style="color: var(--accent); margin-bottom: 15px;">Session Data Logged:</h3>
+                    <ul style="list-style: none; color: #fff; line-height: 2.2; font-weight: 600;">
+                        <li>✔️ Modals of Advice (Should/Ought to)</li>
+                        <li>✔️ Modals of Obligation (Have to/Must)</li>
+                        <li>✔️ Vocabulary: Choke, Preoccupied, Butterflies</li>
+                        <li>✔️ High-Pressure Speaking Scenarios</li>
+                    </ul>
+                </div>
+                <p style="color: var(--text-dim);">Would you like me to generate the homework task in PDF or text format?</p>
+                <button class="btn btn-accent" style="margin-top:15px;" onclick="alert('Homework system can be activated via chat.')">Request Homework</button>
+            </div>`
+        ];
+
+        // --- CORE LOGIC ---
+        let currentStep = 0;
+        const totalSteps = stepsData.length;
+        const mainContainer = document.getElementById('main-container');
+
+        // Inject Steps into DOM
+        function initializeSteps() {
+            stepsData.forEach((htmlContent, index) => {
+                const section = document.createElement('section');
+                section.className = 'step';
+                section.id = `step-${index}`;
+                section.innerHTML = htmlContent;
+                mainContainer.appendChild(section);
+            });
+            updateUI();
+        }
+
+        function updateUI() {
+            document.querySelectorAll('.step').forEach((step, index) => {
+                if(index === currentStep) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.remove('active');
+                }
+            });
+
+            document.getElementById('prevBtn').disabled = currentStep === 0;
+            document.getElementById('nextBtn').style.display = currentStep === totalSteps - 1 ? 'none' : 'block';
+            document.getElementById('step-counter').innerText = `STEP ${currentStep} / ${totalSteps - 1}`;
+            
+            const progress = (currentStep / (totalSteps - 1)) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            
+            mainContainer.scrollTo(0, 0);
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps - 1) { currentStep++; updateUI(); closeVocab(); }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) { currentStep--; updateUI(); closeVocab(); }
+        }
+
+        // --- INTERACTION FUNCTIONS ---
+        function unlockPrompt(id) {
+            const prompt = document.getElementById(id);
+            if(prompt) prompt.style.display = 'block';
+        }
+
+        function checkSliders(promptId) {
+            unlockPrompt(promptId);
+        }
+
+        function selectCard(card, groupSelector) {
+            const parent = card.closest('div').parentElement;
+            parent.querySelectorAll('.choice-card').forEach(el => {
+                el.style.opacity = '0.4';
+                el.style.borderColor = 'transparent';
+            });
+            card.style.opacity = '1';
+            card.style.borderColor = 'var(--accent)';
+        }
+
+        function genericCorrect(btn, isCorrect) {
+            const parent = btn.parentElement;
+            let attempts = parseInt(parent.dataset.attempts || '0');
+            
+            const options = Array.from(parent.querySelectorAll('div, button, span')).filter(b => b.hasAttribute('onclick') && b.getAttribute('onclick').includes('genericCorrect'));
+            const maxAttempts = Math.min(3, options.length - 1);
+
+            const correctBtn = options.find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes('true'));
+            let promptIdToUnlock = null;
+            if (correctBtn) {
+                const match = correctBtn.getAttribute('onclick').match(/unlockPrompt\(['"]([^'"]+)['"]\)/);
+                if (match) promptIdToUnlock = match[1];
+            }
+
+            if(isCorrect) {
+                options.forEach(b => b.style.pointerEvents = 'none');
+                btn.style.backgroundColor = 'var(--correct)';
+                btn.style.color = '#000';
+                btn.style.borderColor = 'var(--correct)';
+            } else {
+                attempts++;
+                parent.dataset.attempts = attempts;
+                
+                btn.style.backgroundColor = 'var(--incorrect)';
+                btn.style.color = '#fff';
+                btn.style.borderColor = 'var(--incorrect)';
+                btn.style.animation = 'shake 0.4s';
+                btn.style.pointerEvents = 'none';
+                
+                if (attempts >= maxAttempts) {
+                    options.forEach(b => b.style.pointerEvents = 'none');
+                    if (correctBtn) {
+                        correctBtn.style.backgroundColor = 'var(--correct)';
+                        correctBtn.style.color = '#000';
+                        correctBtn.style.borderColor = 'var(--correct)';
+                    }
+                    if (promptIdToUnlock) {
+                        setTimeout(() => unlockPrompt(promptIdToUnlock), 500);
+                    }
+                }
+            }
+        }
+
+        function checkTrueFalse(btn, isCorrect, promptId) {
+            const parent = btn.parentElement;
+            let attempts = parseInt(parent.dataset.attempts || '0');
+            const options = Array.from(parent.querySelectorAll('button'));
+            
+            if (isCorrect) {
+                options.forEach(b => b.style.pointerEvents = 'none');
+                btn.style.backgroundColor = 'var(--correct)';
+                btn.style.color = '#000';
+                btn.style.borderColor = 'var(--correct)';
+                unlockPrompt(promptId);
+            } else {
+                attempts++;
+                parent.dataset.attempts = attempts;
+                
+                btn.style.backgroundColor = 'var(--incorrect)';
+                btn.style.color = '#fff';
+                btn.style.borderColor = 'var(--incorrect)';
+                btn.style.animation = 'shake 0.4s';
+                btn.style.pointerEvents = 'none';
+                
+                if (attempts >= 1) {
+                    options.forEach(b => {
+                        b.style.pointerEvents = 'none';
+                        if (b.getAttribute('onclick').includes('true')) {
+                            b.style.backgroundColor = 'var(--correct)';
+                            b.style.color = '#000';
+                            b.style.borderColor = 'var(--correct)';
+                        }
+                    });
+                    setTimeout(() => unlockPrompt(promptId), 500);
+                }
+            }
+        }
+
+        // Memory Game
+        const memSequence = ['FOCUS', 'BREATHE', 'CALM', 'ACTION'];
+        let memIndex = 0;
+        let memAttempts = 0;
+
+        function startMemoryGame() {
+            document.getElementById('mem-seq').style.display = 'none';
+            document.getElementById('mem-start').style.display = 'none';
+            document.getElementById('mem-test').style.display = 'block';
+            memIndex = 0;
+            memAttempts = 0;
+        }
+
+        function checkMem(btn, word, promptId) {
+            if(word === memSequence[memIndex]) {
+                btn.style.backgroundColor = 'var(--correct)';
+                btn.style.color = '#000';
+                btn.style.pointerEvents = 'none';
+                memIndex++;
+                memAttempts = 0;
+                if(memIndex === memSequence.length) unlockPrompt(promptId);
+            } else {
+                memAttempts++;
+                btn.style.backgroundColor = 'var(--incorrect)';
+                setTimeout(()=> {
+                    if(btn.style.backgroundColor !== 'var(--correct)') {
+                        btn.style.backgroundColor = '#282828';
+                    }
+                }, 500);
+
+                if (memAttempts >= 3) {
+                    const correctWord = memSequence[memIndex];
+                    const parent = btn.parentElement;
+                    const correctBtn = Array.from(parent.querySelectorAll('.memory-btn')).find(b => b.innerText.trim() === correctWord);
+                    
+                    if (correctBtn) {
+                        correctBtn.style.backgroundColor = 'var(--correct)';
+                        correctBtn.style.color = '#000';
+                        correctBtn.style.pointerEvents = 'none';
+                    }
+                    memIndex++;
+                    memAttempts = 0;
+                    if(memIndex === memSequence.length) {
+                        setTimeout(() => unlockPrompt(promptId), 500);
+                    }
+                }
+            }
+        }
+
+        // Builders
+        let buildState = {};
+        function moveWord(chip, dzId, targetArray, promptId) {
+            if(chip.classList.contains('used')) return;
+            const word = chip.innerText;
+            const dz = document.getElementById(dzId);
+            
+            const newChip = document.createElement('div');
+            newChip.className = 'word-chip';
+            newChip.style.background = 'var(--accent)';
+            newChip.style.color = '#000';
+            newChip.innerText = word;
+            dz.appendChild(newChip);
+            chip.classList.add('used');
+
+            if(!buildState[dzId]) buildState[dzId] = [];
+            buildState[dzId].push(word);
+
+            if(buildState[dzId].length === targetArray.length) {
+                if(JSON.stringify(buildState[dzId]) === JSON.stringify(targetArray)) {
+                    dz.classList.add('success');
+                    unlockPrompt(promptId);
+                } else {
+                    let attempts = parseInt(dz.dataset.attempts || '0') + 1;
+                    dz.dataset.attempts = attempts;
+                    
+                    dz.style.borderColor = 'var(--incorrect)'; dz.style.animation = 'shake 0.4s';
+                    
+                    if (attempts >= 3) {
+                        setTimeout(() => {
+                            dz.innerHTML = '';
+                            dz.style.borderColor = '';
+                            dz.style.animation = '';
+                            dz.classList.add('success');
+                            
+                            targetArray.forEach(w => {
+                                const finalChip = document.createElement('div');
+                                finalChip.className = 'word-chip';
+                                finalChip.style.background = 'var(--accent)';
+                                finalChip.style.color = '#000';
+                                finalChip.innerText = w;
+                                dz.appendChild(finalChip);
+                            });
+                            
+                            chip.parentElement.querySelectorAll('.word-chip').forEach(c => c.classList.add('used'));
+                            setTimeout(() => unlockPrompt(promptId), 500);
+                        }, 1000);
+                    } else {
+                        setTimeout(() => { 
+                            dz.innerHTML = ''; dz.style.borderColor=''; dz.style.animation=''; buildState[dzId]=[]; 
+                            chip.parentElement.querySelectorAll('.word-chip').forEach(c=>c.classList.remove('used')); 
+                        }, 1000);
+                    }
+                }
+            }
+        }
+
+        // Chat Logic
+        function handleChat(btn, isCorrect, containerId, promptId) {
+            const container = document.getElementById(containerId);
+            let attempts = parseInt(container.dataset.attempts || '0');
+            const options = Array.from(container.querySelectorAll('.chat-option'));
+            const maxAttempts = Math.min(3, options.length - 1);
+
+            if(isCorrect) {
+                options.forEach(b => b.style.pointerEvents = 'none');
+                btn.style.backgroundColor = 'var(--correct)';
+                btn.style.color = '#000';
+                setTimeout(() => {
+                    container.innerHTML = `<div class="msg you" style="display:block;">${btn.innerText}</div>`;
+                    unlockPrompt(promptId);
+                }, 800);
+            } else {
+                attempts++;
+                container.dataset.attempts = attempts;
+                
+                btn.style.backgroundColor = 'var(--incorrect)';
+                btn.style.color = '#fff';
+                btn.style.animation = 'shake 0.4s';
+                btn.style.pointerEvents = 'none';
+
+                if (attempts >= maxAttempts) {
+                    const correctBtn = options.find(b => b.getAttribute('onclick').includes('true'));
+                    options.forEach(b => b.style.pointerEvents = 'none');
+                    if (correctBtn) {
+                        correctBtn.style.backgroundColor = 'var(--correct)';
+                        correctBtn.style.color = '#000';
+                        setTimeout(() => {
+                            container.innerHTML = `<div class="msg you" style="display:block;">${correctBtn.innerText}</div>`;
+                            unlockPrompt(promptId);
+                        }, 1000);
+                    }
+                }
+            }
+        }
+
+        // Card Flip
+        function flipCard(card, promptId) {
+            if(!card.classList.contains('flipped')) {
+                card.classList.add('flipped');
+                unlockPrompt(promptId);
+            }
+        }
+
+        // Match Game
+        let matchSelected = null;
+        let matchesFound = 0;
+        function handleMatch(card, promptId) {
+            if(card.style.opacity === '0') return;
+            if(!matchSelected) {
+                matchSelected = card;
+                card.style.borderColor = 'var(--accent)';
+            } else {
+                if(matchSelected.dataset.val === card.dataset.val && matchSelected !== card) {
+                    matchSelected.style.opacity = '0'; card.style.opacity = '0';
+                    matchesFound++;
+                    if(matchesFound === 3) unlockPrompt(promptId);
+                } else {
+                    matchSelected.style.borderColor = 'transparent';
+                    card.style.animation = 'shake 0.4s';
+                }
+                matchSelected = null;
+            }
+        }
+
+        // Routines Check
+        let routinesClicked = 0;
+        function checkRoutines(promptId) {
+            routinesClicked++;
+            if(routinesClicked >= 3) unlockPrompt(promptId);
+        }
+        
+        function revealRoutine(card, title, desc, promptId) {
+            card.innerHTML = `<h3 style="color:var(--accent); font-weight:800; margin-bottom:5px;">${title}</h3><p style="font-size:0.9rem; margin:0; color:var(--text-dim);">${desc}</p>`;
+            card.style.borderColor = 'var(--accent)';
+            card.style.background = 'var(--surface-hover)';
+            card.style.pointerEvents = 'none';
+            checkRoutines(promptId);
+        }
+
+        let myRoutines = 0;
+        function checkMyRoutine(promptId) {
+            unlockPrompt(promptId);
+        }
+
+        // Roleplay generator
+        const roles = [
+            "You are a Sports Psychologist. Your client is terrified of the Olympics.",
+            "You are an experienced CEO. Your junior employee is shaking before a presentation.",
+            "You are a driving instructor calming down a crying student."
+        ];
+        function generateRole(promptId) {
+            document.getElementById('role-box').innerText = roles[Math.floor(Math.random() * roles.length)];
+            unlockPrompt(promptId);
+        }
+
+        // UI Tools (Whiteboard & Vocab)
+        function toggleWhiteboard() { document.getElementById('whiteboardPanel').classList.toggle('open'); }
+        
+        function openVocab(word, promptId) {
+            const data = vocabData[word];
+            if(data) {
+                document.getElementById('vocab-title').innerText = word;
+                document.getElementById('vocab-def').innerText = data.def;
+                document.getElementById('vocab-ex').innerText = `"${data.ex}"`;
+                document.getElementById('vocab-speak').innerText = data.speak;
+            }
+            document.getElementById('vocabPanel').classList.add('open');
+            unlockPrompt(promptId);
+        }
+        
+        function closeVocab() { document.getElementById('vocabPanel').classList.remove('open'); }
+        
+        function toggleFullscreen() {
+            try {
+                if (!document.fullscreenEnabled) {
+                    console.warn("O modo tela cheia não é permitido neste ambiente.");
+                    return;
+                }
+                if (!document.fullscreenElement) {
+                    const promise = document.documentElement.requestFullscreen();
+                    if (promise !== undefined) {
+                        promise.catch(err => {
+                            console.warn(`Erro ao tentar ativar tela cheia: ${err.message}`);
+                        });
+                    }
+                } else if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            } catch (err) {
+                console.warn(`Erro inesperado ao alternar tela cheia: ${err.message}`);
+            }
+        }
+
+        // Start
+        window.onload = initializeSteps;
+    </script>
+</body>
+</html>
